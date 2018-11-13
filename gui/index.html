@@ -1,0 +1,42 @@
+<head>
+    <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
+</head>
+
+<script>
+  async function run () {
+    const graph = document.getElementById('graph')
+
+    getData().then(data => {
+      Plotly.newPlot(graph, [
+        {
+          type: 'scattergl',
+          name: 'sample',
+          mode: 'line',
+          line: {color: '#0018f1'},
+          // x: data.map(i => i.pos),
+          y: data.map(i => i.sample),
+        },
+        {
+          type: 'scattergl',
+          name: 'threshold',
+          mode: 'line',
+          line: {color: '#f10900'},
+          // x: data.map(i => i.pos),
+          y: data.map(i => i.threshold),
+        },
+        {
+          type: 'scattergl',
+          name: 'lastPeakDistance',
+          mode: 'line',
+          line: {color: '#44f100'},
+          // x: data.map(i => i.pos),
+          y: data.map(i => i.lastPeakDistance),
+        }
+      ])
+    })
+  }
+</script>
+
+<body onload="run()">
+<div id="graph"></div>
+</body>
