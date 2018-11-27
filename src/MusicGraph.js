@@ -1,6 +1,3 @@
-const path = require('path')
-const fs = require('fs')
-
 const FREQ = 44100
 const MAX_INT = 32768
 const COLORS = {
@@ -12,203 +9,213 @@ const COLORS = {
 }
 
 class MusicGraph {
-
-  constructor (filename) {
-    this.records = []
+  constructor (secondWidth, secondHeight) {
+    this.renderer = renderer(secondWidth, secondHeight)
+    this.pos = 1
   }
 
   addRecord (record) {
-    if (this.records.length >= FREQ) {
+    this.renderer.addRecord(this.pos, record)
+    this.pos++
+  }
 
+  getSVG () {
+    const root = this.renderer.getSVG()
+    return stringify(root)
+
+    function stringify ({type, children = [], ...params}) {
+      const _params = Object.keys(params).map(param => `${param}="${params[param]}"`).join(' ')
+
+      if (children.length === 0) return `<${type} ${_params}/>`
+
+      const _children = Array.isArray(children) ? children.map(stringify).join('') : stringify(children)
+      return `<${type} ${_params}>${_children}</${type}>`
     }
   }
-
-  end () {
-  }
 }
 
-function plot (width, height, records) {
-  const root = {
-    type: 'svg',
-    children: plotSlice(width, height, records),
-    xmlns: 'http://www.w3.org/2000/svg',
-    viewBox: `0 0 ${width} ${height}`,
-    width,
-    height,
-    'shape-rendering': 'optimizeSpeed',
+function renderer (secondWidth, secondHeight) {
+  const scaleY = y => (y / MAX_INT) * secondHeight
+  const scaleX = pos => {
+    const main = Math.floor(pos / FREQ) * secondWidth
+    const sub = Math.floor(((pos % FREQ) / FREQ) * secondWidth)
+    return main + sub
   }
 
-  fs.writeFileSync('prova.svg', createSVG(root))
-}
+  const _samplesRenderer = samplesRenderer(scaleX, scaleY)
+  const _thresholdRenderer = thresholdRenderer(scaleX, scaleY)
+  const _peaksRenderer = peaksRenderer(scaleX, scaleY)
+  const _secsRenderer = secsRenderer(scaleX, scaleY)
+  let curPos = undefined
 
-function plotSlice (width, height, records) {
-  return [
-    {
-      type: 'rect',
-      x: 0,
-      y: 0,
-      width,
-      height,
-      fill: COLORS.BACKGROUND
+  return {
+    addRecord (pos, record) {
+      _samplesRenderer.addRecord(pos, record)
+      _thresholdRenderer.addRecord(pos, record)
+      _peaksRenderer.addRecord(pos, record)
+      _secsRenderer.addRecord(pos, record)
+      curPos = pos
     },
-    {
-      type: 'g',
-      transform: `translate(0, ${height / 2}) scale(1, -1)`,
-      children: [
-        ...renderSeconds(width, height, records),
-        ...renderSamples(width, height, records),
-        ...renderThreshold(width, height, records),
-        ...renderPeaks(width, height, records),
-      ]
-    }
-  ]
-}
 
-function createSVG (root) {
-  return stringify(root)
-
-  function stringify ({type, children = [], ...params}) {
-    const _params = Object.keys(params).map(param => `${param}="${params[param]}"`).join(' ')
-
-    if (children.length === 0) return `<${type} ${_params}/>`
-    const _children = Array.isArray(children) ? children.map(stringify).join('') : stringify(children)
-    return `<${type} ${_params}>${_children}</${type}>`
-  }
-}
-
-function renderSamples (width, height, records) {
-  const rescaleSample = threshold => (threshold / MAX_INT) * height
-  const rescalePos = pos => Math.round((pos / records.length) * width)
-
-  let segments = {}
-  for (let i = 0; i < records.length; i++) {
-    const pos = rescalePos(i)
-    if(Array.isArray(segments[pos])) {
-      segments[pos].push(records[i])
-    }else{
-      segments[pos] = [records[i]]
-    }
-  }
-
-  return Object.values(segments)
-    .map(slice => {
-      let max = Number.NEGATIVE_INFINITY
-      let min = Number.POSITIVE_INFINITY
-      let sum = 0
-
-      slice.forEach(v => {
-        max = Math.max(max, v.sample)
-        min = Math.min(min, v.sample)
-        sum += v.threshold
-      })
+    getSVG () {
+      const width = Math.ceil(curPos / FREQ) * secondWidth
 
       return {
-        max: max,
-        min: min,
-        avg: sum / slice.length
+        type: 'svg',
+        xmlns: 'http://www.w3.org/2000/svg',
+        viewBox: `0 0 ${width} ${secondHeight}`,
+        width,
+        height: secondHeight,
+        'shape-rendering': 'crisp-edges',
+        children: [
+          {
+            type: 'rect',
+            x: 0,
+            y: 0,
+            width,
+            height: secondHeight,
+            fill: COLORS.BACKGROUND
+          },
+          {
+            type: 'g',
+            transform: `translate(0, ${secondHeight / 2}) scale(1, -1)`,
+            children: [
+              _secsRenderer.getSVG(),
+              _samplesRenderer.getSVG(),
+              _thresholdRenderer.getSVG(),
+              _peaksRenderer.getSVG(),
+            ]
+          }
+        ]
       }
-    })
-    .map(({max, min, avg}, index) => ({
-      type: 'line',
-      x1: index,
-      y1: rescaleSample(max),
-      x2: index,
-      y2: rescaleSample(min),
-      'stroke-width': 1.1,
-      stroke: COLORS.SAMPLE,
-    }))
+    },
+  }
 }
 
-function renderThreshold (width, height, records) {
-  const rescaleThreshold = threshold => (threshold / MAX_INT) * height
-  const rescalePos = pos => (pos / records.length) * width
+function samplesRenderer (scaleX, scaleY) {
+  let segments = {}
+  return {
+    addRecord (pos, record) {
+      const x = scaleX(pos)
+      if (segments[x]) {
+        segments[x].min = Math.min(segments[x].min, record.sample)
+        segments[x].max = Math.max(segments[x].max, record.sample)
+      } else {
+        segments[x] = {
+          min: record.sample,
+          max: record.sample,
+        }
+      }
+    },
+    getSVG () {
+      return {
+        type: 'g',
+        'stroke-width': 1.1,
+        stroke: COLORS.SAMPLE,
+        children: Object.values(segments)
+          .map(({max, min}, index) => ({
+            type: 'line',
+            x1: index,
+            y1: scaleY(max),
+            x2: index,
+            y2: scaleY(min),
+          }))
+      }
+    }
+  }
+}
 
-  let cur = records[0].threshold
+function thresholdRenderer (scaleX, scaleY) {
+  let curThreshold = 0
   let curPos = 0
   let lines = []
+  let points = `M${scaleX(0)} ${scaleY(curThreshold)} `
 
-  let points = `M0 ${rescaleThreshold(cur)} `
+  return {
+    addRecord (pos, record) {
+      const threshold = record.threshold
+      if (threshold === curThreshold) {
+        pos++
+        return
+      }
 
-  for (let i = 1; i < records.length; i++) {
-    const threshold = records[i].threshold
-    if (threshold === cur) continue
+      points += `L${scaleX(pos)} ${scaleY(threshold)} `
 
-    points += `L${rescalePos(i)} ${rescaleThreshold(threshold)} `
+      curThreshold = threshold
+      curPos = pos
+    },
 
-    cur = threshold
-    curPos = i
+    getSVG () {
+      points += `L${scaleX(curPos)} ${scaleY(curThreshold)}`
+
+      return {
+        type: 'g',
+        stroke: COLORS.THRESHOLD,
+        fill: 'none',
+        children: {
+          type: 'path',
+          d: points,
+        }
+      }
+    }
   }
-
-  points += `L${width} ${rescaleThreshold(cur)}`
-
-  return [{
-    type: 'path',
-    d: points,
-    stroke: COLORS.THRESHOLD,
-    fill: 'none',
-
-  }]
 }
 
-function renderSeconds (width, height, records) {
-  const rescalePos = pos => (pos * FREQ / records.length) * width
+function secsRenderer (scaleX, scaleY) {
+  let secsPos = []
 
-  const secs = records.length / FREQ
-  let lines = []
+  return {
+    addRecord (pos, record) {
+      if (pos % FREQ > 0) return
+      secsPos.push(pos)
+    },
 
-  for (let i = 0; i < secs; i++) {
-    lines.push({
-      type: 'line',
-      x1: rescalePos(i),
-      y1: -height * 0.5,
-      x2: rescalePos(i),
-      y2: height * 0.5,
-      'stroke-width': 1,
-      'stroke-opacity': 0.3,
-      stroke: COLORS.SECS,
-    })
+    getSVG () {
+      return {
+        type: 'g',
+        'stroke-width': 1,
+        'stroke-opacity': 0.3,
+        stroke: COLORS.SECS,
+        children: secsPos.map(pos => ({
+          type: 'line',
+          x1: scaleX(pos),
+          y1: scaleY(-MAX_INT),
+          x2: scaleX(pos),
+          y2: scaleY(MAX_INT),
+        }))
+      }
+    }
   }
-  return lines
 }
 
-function renderPeaks (width, height, records) {
-  const rescalePos = pos => (pos / records.length) * width
+function peaksRenderer (scaleX, scaleY) {
   const LINE_HEIGHT = 0.8
 
-  let lines = []
+  let peaksPos = []
 
-  for (let i = 0; i < records.length; i++) {
-    if (records[i].lastPeakDistance > 0) continue
+  return {
+    addRecord (pos, record) {
+      if (record.lastPeakDistance > 0) return
 
-    lines.push({
-      type: 'line',
-      x1: rescalePos(i),
-      y1: -height * 0.5 * LINE_HEIGHT,
-      x2: rescalePos(i),
-      y2: height * 0.5 * LINE_HEIGHT,
-      'stroke-width': 1,
-      'stroke-opacity': 0.3,
-      stroke: COLORS.PEAK,
-    })
+      peaksPos.push({pos: pos, sample: record.sample})
+    },
+
+    getSVG () {
+      return {
+        type: 'g',
+        'stroke-width': 0,
+        transform: 'translate(0, 30)',
+        stroke: COLORS.PEAK,
+        fill: COLORS.PEAK,
+        children: peaksPos.map(({pos, sample}) => ({
+          type: 'circle',
+          cx: scaleX(pos),
+          cy: scaleY(sample),
+          r: 4,
+        }))
+      }
+    }
   }
-
-  return lines
 }
 
 module.exports = MusicGraph
-
-let dataset = fs
-  .readFileSync('minOK.csv')
-  .toString()
-  .trim()
-  .split('\n')
-  .slice(FREQ + 2000, FREQ * +2000 + FREQ)
-  .map(v => v.split(',').map(v => parseInt(v)))
-  .map(v => ({
-    pos: parseFloat(v[0]),
-    sample: parseFloat(v[1]),
-    threshold: parseFloat(v[2]),
-    lastPeakDistance: parseFloat(v[3])
-  }))
-
-plot(4410, 600, dataset)
