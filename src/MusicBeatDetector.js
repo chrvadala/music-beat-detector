@@ -3,19 +3,19 @@ const through = require('through2')
 const Fili = require('fili/index')
 
 const FREQ = 44100
-const SAMPLES_WINDOW = FREQ * 2
-const SENSITIVITY = 0.6
-const MIN_PEAK_DISTANCE = FREQ / 3 //at most 3 peaks for seconds max180bpm
-const MIN_ACCEPTED_PEAK = 32767 * 0.01
+const SAMPLES_WINDOW = FREQ * 1.5
+const MIN_PEAK_DISTANCE = FREQ / 5
+const MAX_INT16 = Math.pow(2, 16) / 2 - 1
+const MAX_UINT32 = Math.pow(2, 32) - 1
 
 class MusicBeatDetector {
-
   constructor (options = {}) {
-    this.threshold = Number.POSITIVE_INFINITY
+    this.threshold = MAX_INT16
+    this.lastPeakDistance = MAX_UINT32
     this.slidingWindowMax = new SlidingWindowMax(SAMPLES_WINDOW, {waitFullRange: false})
     this.pos = 0
-    this.lastPeakDistance = Number.POSITIVE_INFINITY
 
+    this.sensitivity = options.sensitivity || 0.6
     this.debugFilter = options.debugFilter
     this.logger = options.logger
 
@@ -36,7 +36,8 @@ class MusicBeatDetector {
       const filteredLeft = this.leftFilter.singleStep(left)
 
       if (this.isPeak(filteredLeft)) {
-        stream.emit('peak', this.pos, this.bpm)
+        let ms = Math.round(this.pos / (FREQ / 1000))
+        stream.emit('peak', ms, this.bpm)
       }
 
       if (this.debugFilter) {
@@ -54,24 +55,24 @@ class MusicBeatDetector {
 
   isPeak (sample) {
     let isPeak = false
-    this.threshold = this.slidingWindowMax.evaluate(sample) * SENSITIVITY
+    this.threshold = this.slidingWindowMax.evaluate(sample) * this.sensitivity
 
-    const overThreshold = sample > this.threshold
+    const overThreshold = sample >= this.threshold
     const enoughTimeSinceLastPeak = this.lastPeakDistance > MIN_PEAK_DISTANCE
-    const enoughVolume = sample > MIN_ACCEPTED_PEAK
 
-    if (overThreshold && enoughTimeSinceLastPeak && enoughVolume) {
+    if (overThreshold && enoughTimeSinceLastPeak) {
       this.bpm = Math.round(60 * FREQ / this.lastPeakDistance)
       this.lastPeakDistance = 0
       return true
     }
 
     if (this.logger) {
-      this.logger({pos: this.pos, sample, threshold: this.threshold, lastPeakDistance: this.lastPeakDistance})
+      this.logger({sample, threshold: this.threshold, lastPeakDistance: this.lastPeakDistance})
     }
 
-    this.lastPeakDistance++
     this.pos++
+    this.lastPeakDistance++
+    if (this.lastPeakDistance > MAX_UINT32) this.lastPeakDistance = MAX_UINT32
 
     return false
   }
@@ -79,12 +80,10 @@ class MusicBeatDetector {
   getBandFilter () {
     const firCalculator = new Fili.FirCoeffs()
 
-    const firFilterCoeffs = firCalculator.kbFilter({
-      order: 101,
+    const firFilterCoeffs = firCalculator.lowpass({
+      order: 100,
       Fs: FREQ,
-      Fa: 20, // rise, 0 for lowpass
-      Fb: 200, // fall, Fs/2 for highpass
-      Att: -60 // attenuation in dB
+      Fc: 350,
     })
 
     return new Fili.FirFilter(firFilterCoeffs)

@@ -6,10 +6,9 @@
   "author": "chr.vadala",
   "license": "MIT",
   "devDependencies": {
-    "carlo": "^0.9.20",
     "lame": "^1.2.4",
-    "speaker": "^0.4.1",
-    "standard": "^12.0.1"
+    "progress-stream": "^2.0.0",
+    "speaker": "^0.4.1"
   },
   "dependencies": {
     "fili": "^2.0.1",
