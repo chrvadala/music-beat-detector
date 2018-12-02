@@ -5,13 +5,11 @@
   "repository": "https://github.com/chrvadala/music-beat-detector.git",
   "author": "chr.vadala",
   "license": "MIT",
-  "devDependencies": {
-    "lame": "^1.2.4",
-    "progress-stream": "^2.0.0",
-    "speaker": "^0.4.1"
-  },
   "dependencies": {
     "fili": "^2.0.1",
     "through2": "^3.0.0"
+  },
+  "devDependencies": {
+    "speaker": "^0.4.1"
   }
 }
