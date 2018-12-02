@@ -1,4 +1,5 @@
 module.exports = {
   MusicBeatDetector: require('./src/MusicBeatDetector'),
-  MusicGraph: require('./src/MusicGraph')
+  MusicGraph: require('./src/MusicGraph'),
+  MusicBeatScheduler: require('./src/MusicBeatScheduler')
 }
