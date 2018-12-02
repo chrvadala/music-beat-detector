@@ -12,6 +12,11 @@ class MusicGraph {
   constructor (secondWidth, secondHeight) {
     this.renderer = renderer(secondWidth, secondHeight)
     this.pos = 1
+    this.addRecord = this.addRecord.bind(this)
+  }
+
+  getPlotter(){
+    return this.addRecord
   }
 
   addRecord (record) {
