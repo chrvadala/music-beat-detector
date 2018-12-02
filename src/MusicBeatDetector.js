@@ -17,17 +17,23 @@ class MusicBeatDetector {
 
     this.sensitivity = options.sensitivity || 0.6
     this.debugFilter = options.debugFilter
-    this.logger = options.logger
+    this.plotter = options.plotter
+    this.scheduler = options.scheduler
+    this.minThreashold = options.minThreashold || MAX_INT16 * 0.05
 
     this.leftFilter = this.getBandFilter()
     this.rightFilter = this.getBandFilter()
 
     const analyzeBuffer = this.analyzeBuffer.bind(this)
 
-    return through(function (packet, enc, cb) {
+    this.through = through(function (packet, enc, cb) {
       const stream = this
       analyzeBuffer(stream, packet, cb)
     })
+  }
+
+  getAnalyzer () {
+    return this.through
   }
 
   analyzeBuffer (stream, packet, done) {
@@ -37,7 +43,8 @@ class MusicBeatDetector {
 
       if (this.isPeak(filteredLeft)) {
         let ms = Math.round(this.pos / (FREQ / 1000))
-        stream.emit('peak', ms, this.bpm)
+        stream.emit('peak-detected', ms, this.bpm)
+        if (this.scheduler) this.scheduler(ms)
       }
 
       if (this.debugFilter) {
@@ -55,7 +62,10 @@ class MusicBeatDetector {
 
   isPeak (sample) {
     let isPeak = false
-    this.threshold = this.slidingWindowMax.evaluate(sample) * this.sensitivity
+    this.threshold = Math.max(
+      this.slidingWindowMax.evaluate(sample) * this.sensitivity,
+      this.minThreashold
+    )
 
     const overThreshold = sample >= this.threshold
     const enoughTimeSinceLastPeak = this.lastPeakDistance > MIN_PEAK_DISTANCE
@@ -66,8 +76,8 @@ class MusicBeatDetector {
       return true
     }
 
-    if (this.logger) {
-      this.logger({sample, threshold: this.threshold, lastPeakDistance: this.lastPeakDistance})
+    if (this.plotter) {
+      this.plotter({sample, threshold: this.threshold, lastPeakDistance: this.lastPeakDistance})
     }
 
     this.pos++
