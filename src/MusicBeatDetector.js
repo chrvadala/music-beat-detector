@@ -63,7 +63,7 @@ class MusicBeatDetector {
   isPeak (sample) {
     let isPeak = false
     this.threshold = Math.max(
-      this.slidingWindowMax.evaluate(sample) * this.sensitivity,
+      this.slidingWindowMax.add(sample) * this.sensitivity,
       this.minThreashold
     )
 
