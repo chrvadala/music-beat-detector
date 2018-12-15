@@ -7,9 +7,11 @@
   "license": "MIT",
   "dependencies": {
     "fili": "^2.0.1",
+    "sliding-window-max": "^0.1.0",
     "through2": "^3.0.0"
   },
   "devDependencies": {
+    "create-music-stream": "^1.0.0",
     "speaker": "^0.4.1"
   }
 }
