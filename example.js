@@ -7,7 +7,7 @@ const {MusicBeatDetector, MusicBeatScheduler, MusicGraph} = require('.')
 const musicSource = process.argv[2] //get the first argument on cli
 
 //MusicGraph generates an SVG graph that displays every detected peak
-const musicGraph = new MusicGraph(100, 600)
+const musicGraph = new MusicGraph()
 
 //MusicBeatScheduler syncs any detected peak with the listened audio. It's useful to control some lights or any other effect
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
