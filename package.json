@@ -1,6 +1,6 @@
 {
   "name": "music-beat-detector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "index.js",
   "repository": "https://github.com/chrvadala/music-beat-detector.git",
   "author": "chr.vadala",
