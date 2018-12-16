@@ -67,8 +67,7 @@ node example.js https://www.youtube.com/watch?v=59Q_lhgGANc
 |options.minThreashold | 1638 | Peaks under this level are ignored (usually they're noise) |
 |options.debugFilter  | false | Stream the filtered music throught the lowpass filter (for debug purpose) |
 
-## getAnalyzer()
-Returns a transformer stream that analyze the music
+- `getAnalyzer()` - Returns a transformer stream that analyze the music
 
 ### `new MusicBeatScheduler(effectCallback)`
 - `getScheduler()` - returns an instance used by `MusicBeatDetector`
