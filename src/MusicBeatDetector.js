@@ -21,10 +21,10 @@ class MusicBeatDetector {
     this.scheduler = options.scheduler
     this.minThreashold = options.minThreashold || MAX_INT16 * 0.05
 
-    this.leftFilter = this.getBandFilter()
-    this.rightFilter = this.getBandFilter()
+    this.leftFilter = this._getBandFilter()
+    this.rightFilter = this._getBandFilter()
 
-    const analyzeBuffer = this.analyzeBuffer.bind(this)
+    const analyzeBuffer = this._analyzeBuffer.bind(this)
 
     this.through = through(function (packet, enc, cb) {
       const stream = this
@@ -36,12 +36,12 @@ class MusicBeatDetector {
     return this.through
   }
 
-  analyzeBuffer (stream, packet, done) {
+  _analyzeBuffer (stream, packet, done) {
     for (let i = 0; i < packet.length; i += 4) {
       const left = packet.readInt16LE(i)
       const filteredLeft = this.leftFilter.singleStep(left)
 
-      if (this.isPeak(filteredLeft)) {
+      if (this._isPeak(filteredLeft)) {
         let ms = Math.round(this.pos / (FREQ / 1000))
         stream.emit('peak-detected', ms, this.bpm)
         if (this.scheduler) this.scheduler(ms)
@@ -60,7 +60,7 @@ class MusicBeatDetector {
     done()
   }
 
-  isPeak (sample) {
+  _isPeak (sample) {
     let isPeak = false
     this.threshold = Math.max(
       this.slidingWindowMax.add(sample) * this.sensitivity,
@@ -87,7 +87,7 @@ class MusicBeatDetector {
     return false
   }
 
-  getBandFilter () {
+  _getBandFilter () {
     const firCalculator = new Fili.FirCoeffs()
 
     const firFilterCoeffs = firCalculator.lowpass({
