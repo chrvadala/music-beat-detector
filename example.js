@@ -4,6 +4,8 @@ const createMusicStream = require('create-music-stream')
 
 const {MusicBeatDetector, MusicBeatScheduler, MusicGraph} = require('.')
 
+const musicSource = process.argv[2] //get the first argument on cli
+
 //MusicGraph generates an SVG graph that displays every detected peak
 const musicGraph = new MusicGraph(100, 600)
 
@@ -19,7 +21,7 @@ const musicBeatDetector = new MusicBeatDetector({
 })
 
 //get any raw pcm_16le stream
-createMusicStream(process.argv[2])
+createMusicStream(musicSource)
 
   //pipe on analyzer
   .pipe(musicBeatDetector.getAnalyzer())
