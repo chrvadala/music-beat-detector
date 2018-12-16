@@ -9,7 +9,7 @@ const COLORS = {
 }
 
 class MusicGraph {
-  constructor (secondWidth, secondHeight) {
+  constructor (secondWidth = 100, secondHeight = 300) {
     this.renderer = renderer(secondWidth, secondHeight)
     this.pos = 1
     this.addRecord = this.addRecord.bind(this)
