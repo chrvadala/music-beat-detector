@@ -44,7 +44,8 @@ createMusicStream(musicSource)
   .on('open', () => musicBeatScheduler.start())
 ```
 ### Usage
-You can play any music sound supported by the library [create-music-stream](https://github.com/chrvadala/create-music-stream). Note: The beat detection performs better on mp3 files then YouTube videos.
+You can play any music sound supported by the library [create-music-stream](https://github.com/chrvadala/create-music-stream). 
+*Note: The beat detection performs better on mp3 files then YouTube videos.*
 ```javascript
 node example.js ./track.mp3
 node example.js https://www.youtube.com/watch?v=qeMFqkcPYcg
@@ -55,3 +56,6 @@ node example.js https://www.youtube.com/watch?v=59Q_lhgGANc
 
 ## Contributors
 - [chrvadala](https://github.com/chrvadala) (author)
+
+## Beat detection visualized
+![music-beat-detector](https://github.com/chrvadala/music-beat-detector/blob/master/example-graph.png?raw=true)
