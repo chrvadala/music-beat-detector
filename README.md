@@ -11,6 +11,8 @@ Bundled with this library there are three components:
 - `MusicBeatScheduler` is able to sync any detected peak with the listened audio. It's useful to control some lights or any other effect.
 - `MusicGraph` generates an SVG graph that displays every detected peak. It's useful to tune the peak detection.
 
+![music-beat-detector](https://github.com/chrvadala/music-beat-detector/blob/master/example-graph.png?raw=true)
+
 
 ## Example
 ```javascript
@@ -21,7 +23,7 @@ const {MusicBeatDetector, MusicBeatScheduler, MusicGraph} = require('music-beat-
 
 const musicSource = process.argv[2] //get the first argument on cli
 
-const musicGraph = new MusicGraph(100, 600)
+const musicGraph = new MusicGraph()
 
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
   console.log(`peak at ${pos}ms`) // your music effect goes here
@@ -54,8 +56,28 @@ node example.js https://www.youtube.com/watch?v=n_GFN3a0yj0
 node example.js https://www.youtube.com/watch?v=59Q_lhgGANc
 ```
 
+## Reference
+
+### `new MusicBeatDetector(options)`
+|Param                |Default            |Description|
+|---------------------|-------------------|-----------|
+|options.sensitivity  | 0.6   | Response to the music wave  (value from 0.5 to 1) |
+|options.plotter      | - | Instance of `MusicGraph`                              |
+|options.scheduler    | - | Instance of `MusicBeatScheduler`                      | 
+|options.minThreashold | 1638 | Peaks under this level are ignored (usually they're noise) |
+|options.debugFilter  | false | Stream the filtered music throught the lowpass filter (for debug purpose) |
+
+## getAnalyzer()
+Returns a transformer stream that analyze the music
+
+### `new MusicBeatScheduler(effectCallback)`
+- `getScheduler()` - returns an instance used by `MusicBeatDetector`
+- `start()` - start effects (usually controlled by speaker events)
+
+### `new MusicGraph(secondWidth, secondHeight)`
+- `getPlotter()` - returns an instance used by `MusicBeatDetector`
+- `getSVG()` - returns a string with the SVG that displays the analyzed music
+
 ## Contributors
 - [chrvadala](https://github.com/chrvadala) (author)
 
-## Beat detection visualized
-![music-beat-detector](https://github.com/chrvadala/music-beat-detector/blob/master/example-graph.png?raw=true)
