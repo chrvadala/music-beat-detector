@@ -18,7 +18,7 @@ Bundled with this library there are three components:
 ```javascript
 const fs = require('fs')
 const Speaker = require('speaker')
-const createMusicStream = require('create-music-stream')
+const createMusicStream = require('create-music-stream') //read this https://github.com/chrvadala/create-music-stream#faq
 const {MusicBeatDetector, MusicBeatScheduler, MusicGraph} = require('music-beat-detector')
 
 const musicSource = process.argv[2] //get the first argument on cli
