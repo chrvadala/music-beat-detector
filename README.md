@@ -18,7 +18,7 @@ Bundled with this library there are three components:
 ```javascript
 const fs = require('fs')
 const Speaker = require('speaker')
-const createMusicStream = require('create-music-stream')
+const createMusicStream = require('create-music-stream') //read this https://github.com/chrvadala/create-music-stream#faq
 const {MusicBeatDetector, MusicBeatScheduler, MusicGraph} = require('music-beat-detector')
 
 const musicSource = process.argv[2] //get the first argument on cli
@@ -47,7 +47,7 @@ createMusicStream(musicSource)
 ```
 ### Usage
 You can play any music sound supported by the library [create-music-stream](https://github.com/chrvadala/create-music-stream). 
-*Note: The beat detection performs better on mp3 files then YouTube videos.*
+*Note: The beat detection performs better on mp3 files than YouTube video.*
 ```javascript
 node example.js ./track.mp3
 node example.js https://www.youtube.com/watch?v=qeMFqkcPYcg
