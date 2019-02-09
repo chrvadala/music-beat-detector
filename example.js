@@ -4,14 +4,14 @@ const createMusicStream = require('create-music-stream')
 
 const {MusicBeatDetector, MusicBeatScheduler, MusicGraph} = require('.')
 
-const musicSource = process.argv[2] //get the first argument on cli
+const musicSource = process.argv[2] //gets the first argument on cli
 
-//MusicGraph generates an SVG graph that displays every detected peak
+//MusicGraph generates a SVG graph that displays every detected peak
 const musicGraph = new MusicGraph()
 
-//MusicBeatScheduler syncs any detected peak with the listened audio. It's useful to control some lights or any other effect
+//MusicBeatScheduler syncs any detected peak with the listened audio. It's useful to control some bulbs or any other effect
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
-  console.log(`peak at ${pos}ms`) //do here your effect
+  console.log(`peak at ${pos}ms`) //do your effect here
 })
 
 //MusicBeatDetector analyzes the music
